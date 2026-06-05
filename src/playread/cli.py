@@ -144,13 +144,11 @@ def render(
     "input_yaml", type=click.Path(exists=True, dir_okay=False, path_type=Path)
 )
 @click.argument("line", nargs=-1, required=True)
-@click.option("--output-dir", type=click.Path(file_okay=False), default=None)
 @click.option("--cache-dir", type=click.Path(file_okay=False), default=None)
 @click.option("--device", default="mps", show_default=True)
 def rerender_lines(
     input_yaml: Path,
     line: tuple[str, ...],
-    output_dir: str | None,
     cache_dir: str | None,
     device: str,
 ) -> None:

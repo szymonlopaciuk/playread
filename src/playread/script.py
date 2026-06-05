@@ -27,6 +27,15 @@ def _cache_path(path: Path, base_dir: Path) -> str:
     return Path(os.path.relpath(path, base_dir)).as_posix()
 
 
+def _resolve_prompt_path(path_value: object, base_dir: Path, label: str) -> Path:
+    path = _resolve_path(path_value, base_dir)
+    if not path.exists():
+        raise ValueError(f"{label} file does not exist: {path}")
+    if not path.is_file():
+        raise ValueError(f"{label} file must be a file: {path}")
+    return path
+
+
 def normalize_for_tts(character: str, text: str) -> str:
     t = text.strip()
     t = re.sub(r"\s+", " ", t)
@@ -66,7 +75,9 @@ def load_script(script_path: Path) -> Script:
     for character, raw_cfg in voices_data.items():
         cfg = _require_mapping(raw_cfg, f"voices.{character}")
         prompt_path = (
-            _resolve_path(cfg["file"], script_dir) if cfg.get("file") else None
+            _resolve_prompt_path(cfg["file"], script_dir, f"voices.{character}")
+            if cfg.get("file")
+            else None
         )
         character_name = str(character)
         voices[character_name] = VoiceConfig(

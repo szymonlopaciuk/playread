@@ -8,7 +8,6 @@ from typing import Any
 
 from .model import ScriptLine
 
-MANIFEST_SCHEMA = 2
 SYNTHESIS_SETTINGS = {
     "engine": "chatterbox-tts",
     "normalizer": "playread.script.normalize_for_tts",
@@ -46,18 +45,16 @@ def default_cache_dir(input_path: Path) -> Path:
 
 def load_manifest(cache: LineCache) -> dict[str, Any]:
     if not cache.manifest_path.exists():
-        return {"cache_schema": MANIFEST_SCHEMA, "lines": {}}
+        return {"lines": {}}
     with cache.manifest_path.open("r", encoding="utf-8") as manifest_file:
         data = json.load(manifest_file)
     if not isinstance(data, dict) or not isinstance(data.get("lines"), dict):
-        return {"cache_schema": MANIFEST_SCHEMA, "lines": {}}
-    data.setdefault("cache_schema", MANIFEST_SCHEMA)
+        return {"lines": {}}
     return data
 
 
 def save_manifest(cache: LineCache, manifest: dict[str, Any]) -> None:
     cache.ensure_dirs()
-    manifest["cache_schema"] = MANIFEST_SCHEMA
     with cache.manifest_path.open("w", encoding="utf-8") as manifest_file:
         json.dump(manifest, manifest_file, indent=2, sort_keys=True)
         manifest_file.write("\n")

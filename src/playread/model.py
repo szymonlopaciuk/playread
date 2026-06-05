@@ -18,7 +18,11 @@ class VoiceConfig:
             "cfg_weight": self.cfg_weight if self.cfg_weight is not None else 0.5,
             "exaggeration": self.exaggeration if self.exaggeration is not None else 0.5,
         }
-        if self.audio_prompt_path is not None and self.audio_prompt_path.exists():
+        if self.audio_prompt_path is not None:
+            if not self.audio_prompt_path.exists():
+                raise ValueError(
+                    f"voice prompt file does not exist: {self.audio_prompt_path}"
+                )
             kwargs["audio_prompt_path"] = str(self.audio_prompt_path)
         return kwargs
 

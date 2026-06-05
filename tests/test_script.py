@@ -13,15 +13,15 @@ from playread.script import (
 )
 
 
-def write_script(tmp_path: Path, body: str) -> Path:
+def write_script(tmp_path: Path, body: str, create_voice: bool = True) -> Path:
+    if create_voice:
+        (tmp_path / "voice.wav").write_bytes(b"voice")
     script_path = tmp_path / "script.yaml"
     script_path.write_text(body, encoding="utf-8")
     return script_path
 
 
 def valid_script(tmp_path: Path) -> Path:
-    voice = tmp_path / "voice.wav"
-    voice.write_bytes(b"voice")
     return write_script(
         tmp_path,
         """
@@ -148,6 +148,25 @@ scene_1:
     )
 
     with pytest.raises(ValueError, match="no voice configured"):
+        load_script(script_path)
+
+
+def test_load_script_rejects_missing_voice_file(tmp_path: Path) -> None:
+    script_path = write_script(
+        tmp_path,
+        """
+voices:
+  A:
+    file: missing.wav
+play:
+  - scene_1
+scene_1:
+  - A: "hello"
+""",
+        create_voice=False,
+    )
+
+    with pytest.raises(ValueError, match="voices.A file does not exist"):
         load_script(script_path)
 
 

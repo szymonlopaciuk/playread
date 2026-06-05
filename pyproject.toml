@@ -1,7 +1,7 @@
 [project]
 name = "playread"
 version = "0.1.0"
-description = "Add your description here"
+description = "Generate audio files based on play scripts, supporting multiple voices and features to help line learning."
 readme = "README.md"
 authors = [
     { name = "Szymon Łopaciuk", email = "szymon@lopaciuk.eu" }
@@ -13,7 +13,6 @@ dependencies = [
     "pyyaml>=6.0.3",
     "torch>=2.11.0",
     "torchaudio>=2.11.0",
-    "torchcodec>=0.11.1",
 ]
 
 [project.scripts]

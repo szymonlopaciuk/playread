@@ -21,10 +21,10 @@ jobs:
         run: uv python install
 
       - name: Check formatting
-        run: uv run --only-dev ruff format --check src tests
+        run: uv run --locked --only-dev ruff format --check src tests
 
       - name: Check linting
-        run: uv run --only-dev ruff check src tests
+        run: uv run --locked --only-dev ruff check src tests
 
       - name: Check typing
-        run: uv run ty check --output-format github src tests
+        run: uv run --locked ty check --output-format github src tests
