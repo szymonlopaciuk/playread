@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Any
 
 import torch
 import torchaudio as ta
@@ -53,7 +54,7 @@ scene_1:
 
 def cache_current_line(
     tmp_path: Path, script_path: Path
-) -> tuple[LineCache, dict[str, object]]:
+) -> tuple[LineCache, dict[str, Any]]:
     script = load_script(script_path)
     line = script.lines[0]
     cache = LineCache(tmp_path / "out")

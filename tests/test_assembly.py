@@ -7,6 +7,7 @@ import torchaudio as ta
 
 from playread.assembly import assemble_scene, estimate_duration_samples
 from playread.cache import LineCache
+from playread.model import Script
 from playread.script import load_script
 
 SR = 1000
@@ -34,7 +35,7 @@ scene_1:
     return script_path
 
 
-def write_line_wavs(script_path: Path, out_dir: Path) -> tuple[object, LineCache]:
+def write_line_wavs(script_path: Path, out_dir: Path) -> tuple[Script, LineCache]:
     script = load_script(script_path)
     cache = LineCache(out_dir)
     for line, samples, value in zip(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, cast
 
 import torch
 import torchaudio as ta
@@ -21,7 +21,7 @@ class TTSModel(Protocol):
 def load_tts_model(device: str) -> TTSModel:
     from chatterbox.tts import ChatterboxTTS
 
-    return ChatterboxTTS.from_pretrained(device=device)
+    return cast("TTSModel", ChatterboxTTS.from_pretrained(device=device))
 
 
 def _as_cpu_channels_first(wav: torch.Tensor) -> torch.Tensor:

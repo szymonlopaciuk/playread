@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -69,6 +69,7 @@ def load_script(script_path: Path) -> Script:
         isinstance(name, str) for name in play_data
     ):
         raise ValueError("play must be a list of scene names")
+    play = cast("list[str]", play_data)
 
     voices: dict[str, VoiceConfig] = {}
     for character, raw_cfg in voices_data.items():
@@ -88,7 +89,7 @@ def load_script(script_path: Path) -> Script:
         )
 
     scenes: dict[str, list[ScriptLine]] = {}
-    for scene_name in play_data:
+    for scene_name in play:
         raw_lines = script_data.get(scene_name)
         if not isinstance(raw_lines, list):
             raise ValueError(f"{scene_name} must be a list of lines")
@@ -141,7 +142,7 @@ def load_script(script_path: Path) -> Script:
 
         scenes[scene_name] = lines
 
-    return Script(path=script_path, voices=voices, play=list(play_data), scenes=scenes)
+    return Script(path=script_path, voices=voices, play=play, scenes=scenes)
 
 
 def parse_selectors(values: tuple[str, ...] | list[str]) -> list[LineSelector]:

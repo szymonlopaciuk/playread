@@ -11,3 +11,8 @@ repos:
         entry: uv run --only-dev ruff format
         language: system
         types_or: [python, pyi]
+      - id: ty-check
+        name: ty check
+        entry: uv run --only-dev ty check
+        language: system
+        pass_filenames: false

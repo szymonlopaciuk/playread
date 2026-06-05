@@ -25,3 +25,6 @@ jobs:
 
       - name: Check linting
         run: uv run --only-dev ruff check src tests
+
+      - name: Check typing
+        run: uv run --only-dev ty check --output-format github src tests
