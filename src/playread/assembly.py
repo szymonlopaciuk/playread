@@ -9,7 +9,6 @@ from .cache import LineCache
 from .model import Script, ScriptLine
 
 INITIAL_PAUSE_MS = 300
-NARRATOR_PAUSE_MS = 450
 LINE_PAUSE_MS = 280
 ESTIMATED_CHARS_PER_SECOND = 14.0
 
@@ -17,10 +16,6 @@ ESTIMATED_CHARS_PER_SECOND = 14.0
 def silence(sr: int, ms: int, channels: int = 1) -> torch.Tensor:
     samples = int(sr * (ms / 1000.0))
     return torch.zeros(channels, samples)
-
-
-def line_pause_ms(character: str) -> int:
-    return NARRATOR_PAUSE_MS if character.upper() == "NARRATOR" else LINE_PAUSE_MS
 
 
 def estimate_duration_samples(text: str, sr: int) -> int:
@@ -124,7 +119,7 @@ def assemble_scene(
                 focus_channel,
             )
         )
-        segments.append(silence(sr, line_pause_ms(line.character), channels))
+        segments.append(silence(sr, LINE_PAUSE_MS, channels))
 
     final_wav = torch.cat(segments, dim=1)
     out_dir.mkdir(parents=True, exist_ok=True)

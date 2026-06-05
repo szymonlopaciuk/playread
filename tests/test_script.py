@@ -7,6 +7,7 @@ import pytest
 from playread.script import (
     find_line,
     load_script,
+    normalize_for_tts,
     parse_selectors,
     render_numbered_markdown,
 )
@@ -47,6 +48,13 @@ def test_load_script_validates_and_normalizes(tmp_path: Path) -> None:
     assert script.scenes["scene_1"][0].normalized_text == "Hello there."
     assert script.scenes["scene_1"][1].normalized_text == "A pause... Then action."
     assert script.voices["A"].audio_prompt_path == (tmp_path / "voice.wav").resolve()
+
+
+def test_normalize_for_tts_applies_generic_text_cleanup() -> None:
+    assert (
+        normalize_for_tts("A", " \u201cHello\u201d \u2014  then\u2013now ")
+        == '"Hello" ... then...now'
+    )
 
 
 def test_load_script_resolves_composite_speaker_voices(tmp_path: Path) -> None:

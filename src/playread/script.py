@@ -31,17 +31,8 @@ def normalize_for_tts(character: str, text: str) -> str:
     t = text.strip()
     t = re.sub(r"\s+", " ", t)
 
-    character_key = character.upper()
-    if character_key == "NARRATOR":
+    if character.upper() == "NARRATOR":
         t = t.replace(". ", "... ")
-    elif character_key == "ALEX":
-        t = t.replace("Well, ", "Well... ")
-        t = t.replace("Sorry, what?", "Sorry... what?")
-        t = t.replace("No, not really...", "No... not really...")
-    elif character_key == "PETER":
-        t = t.replace("Indeed! So,", "Indeed. So,")
-    elif character_key == "MELINDA":
-        pass
 
     return (
         t.replace("\u2019", "'")

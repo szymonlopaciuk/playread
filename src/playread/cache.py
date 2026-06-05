@@ -11,7 +11,7 @@ from .model import ScriptLine
 MANIFEST_SCHEMA = 2
 SYNTHESIS_SETTINGS = {
     "engine": "chatterbox-tts",
-    "normalizer": "examples/synthesize_all.py",
+    "normalizer": "playread.script.normalize_for_tts",
 }
 
 
