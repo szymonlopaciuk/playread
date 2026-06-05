@@ -1,5 +1,7 @@
 # playread
 
+[![Tests](https://github.com/szymonlopaciuk/playread/actions/workflows/tests.yml/badge.svg)](https://github.com/szymonlopaciuk/playread/actions/workflows/tests.yml)
+
 `playread` renders simple play-script YAML files into spoken audio. It uses
 Chatterbox TTS to synthesize each line, then assembles audio files for each
 scene and for the full play.
