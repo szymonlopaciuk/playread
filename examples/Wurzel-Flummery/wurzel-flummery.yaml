@@ -1,0 +1,35 @@
+voices:
+    VIOLA:
+        file: voices/melinda.wav
+        cfg_weight: 0.55
+        exaggeration: 0.65
+    RICHARD:
+        file: voices/peter.wav
+        cfg_weight: 0.55
+        exaggeration: 0.65
+    NARRATOR:
+        file: voices/narrator.wav
+        cfg_weight: 0.3
+        exaggeration: 0.35
+
+play:
+    - scene_1
+
+scene_1:
+    - NARRATOR: "Scene 1. Robert Crawshaw's town house. Morning. It is a June day before the war in the morning-room of Robert Crawshaw's town house. Entering it with our friend the house-agent, our attention would first be called to the delightful club fender round the fireplace. On one side of this a Chesterfield sofa comes out at right angles. In a corner of the sofa Miss Viola Crawshaw is sitting, deep in The Times. The house-agent would hesitate to catalogue her, but we notice for ourselves, before he points out the comfortable armchair opposite, that she is young and pretty. In the middle of the room and facing the fireplace is (observe) a solid knee-hole writing-table, covered with papers and books of reference, and supported by a chair at the middle and another at the side. The rest of the furniture, and the books and pictures round the walls, we must leave until another time, for at this moment the door behind the sofa opens and Richard Meriton comes in. He looks about thirty-five, has a clean-shaven intelligent face, and is dressed in a dark tweed suit. We withdraw hastily, as he comes behind Viola and puts his hands over her eyes.]"
+    - RICHARD: "Three guesses who it is."
+    - VIOLA: "The Archbishop of Canterbury."
+    - RICHARD: "No."
+    - VIOLA: "The Archbishop of York."
+    - RICHARD: "Fortunately that exhausts the archbishops. Now, then, your last guess."
+    - VIOLA: "Richard Meriton, M.P."
+    - RICHARD: "Wonderful!"
+    - NARRATOR: "He kisses the top of her head lightly and goes round to the club fender, where he sits with his back to the fireplace."
+    - RICHARD: "How did you know?"
+    - NARRATOR: "He begins to fill a pipe."
+    - VIOLA: "Well, it couldn't have been father."
+    - RICHARD: "N-no, I suppose not. Not just after breakfast anyway. Anything in the paper?"
+    - VIOLA: "There's a letter from father pointing out that—"
+    - RICHARD: "I never knew such a man as Robert for pointing out."
+    - VIOLA: "Anyhow, it's in big print."
+    - RICHARD: "It would be."
