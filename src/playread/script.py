@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+import os
 import re
 
 import yaml
@@ -20,6 +21,10 @@ def _resolve_path(path_value: object, base_dir: Path) -> Path:
     if not path.is_absolute():
         path = base_dir / path
     return path.resolve()
+
+
+def _cache_path(path: Path, base_dir: Path) -> str:
+    return Path(os.path.relpath(path, base_dir)).as_posix()
 
 
 def normalize_for_tts(character: str, text: str) -> str:
@@ -71,6 +76,7 @@ def load_script(script_path: Path) -> Script:
         voices[character_name] = VoiceConfig(
             character=character_name,
             audio_prompt_path=prompt_path,
+            cache_prompt_path=_cache_path(prompt_path, script_dir) if prompt_path else None,
             cfg_weight=cfg.get("cfg_weight"),
             exaggeration=cfg.get("exaggeration"),
         )

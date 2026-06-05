@@ -7,7 +7,7 @@ import torch
 import torchaudio as ta
 from click.testing import CliRunner
 
-from playread.cache import LineCache, load_manifest, save_manifest, update_line_entry
+from playread.cache import LineCache, default_cache_dir, load_manifest, save_manifest, update_line_entry
 from playread.cli import main
 from playread.script import load_script
 
@@ -42,9 +42,9 @@ scene_1:
     return script_path
 
 
-def seed_cache(script_path: Path, out_dir: Path) -> None:
+def seed_cache(script_path: Path, cache_dir: Path) -> None:
     script = load_script(script_path)
-    cache = LineCache(out_dir)
+    cache = LineCache(cache_dir)
     manifest = load_manifest(cache)
     for line in script.lines:
         path = cache.line_path(line)
@@ -66,28 +66,64 @@ def test_cli_script_writes_markdown(tmp_path: Path) -> None:
 
 def test_cli_rerender_lines_forces_selected_lines(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     script_path = write_script(tmp_path)
-    out_dir = tmp_path / "out"
+    cache_dir = tmp_path / "custom-cache"
     monkeypatch.setattr("playread.cli.load_tts_model", lambda device: FakeModel())
 
     result = CliRunner().invoke(
         main,
-        ["rerender-lines", str(script_path), "scene_1:1", "scene_1:3", "--output-dir", str(out_dir), "--device", "cpu"],
+        [
+            "rerender-lines",
+            str(script_path),
+            "scene_1:1",
+            "scene_1:3",
+            "--cache-dir",
+            str(cache_dir),
+            "--device",
+            "cpu",
+        ],
     )
 
     assert result.exit_code == 0, result.output
-    assert (out_dir / "cache" / "lines" / "scene_1" / "001_A.wav").exists()
-    assert (out_dir / "cache" / "lines" / "scene_1" / "003_A.wav").exists()
-    assert not (out_dir / "scenes").exists()
+    assert (cache_dir / "lines" / "scene_1" / "001_A.wav").exists()
+    assert (cache_dir / "lines" / "scene_1" / "003_A.wav").exists()
+    assert not (tmp_path / "out" / "scenes").exists()
 
 
-def test_cli_render_assembles_from_current_cache(tmp_path: Path) -> None:
+def test_cli_render_assembles_from_default_shared_cache(tmp_path: Path) -> None:
+    script_path = write_script(tmp_path)
+    cache_dir = default_cache_dir(script_path)
+    out_a = tmp_path / "out-a"
+    out_b = tmp_path / "out-b"
+    seed_cache(script_path, cache_dir)
+
+    result_a = CliRunner().invoke(main, ["render", str(script_path), "--output-dir", str(out_a), "--device", "cpu"])
+    result_b = CliRunner().invoke(main, ["render", str(script_path), "--output-dir", str(out_b), "--device", "cpu"])
+
+    assert result_a.exit_code == 0, result_a.output
+    assert result_b.exit_code == 0, result_b.output
+    assert "Line cache is current." in result_a.output
+    assert "Line cache is current." in result_b.output
+    assert (cache_dir / "lines" / "scene_1" / "001_A.wav").exists()
+    assert not (out_a / "cache").exists()
+    assert not (out_b / "cache").exists()
+    assert (out_a / "scenes" / "scene_1.wav").exists()
+    assert (out_b / "play.wav").exists()
+    assert (out_b / "script.md").exists()
+
+
+def test_cli_render_uses_custom_cache_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     script_path = write_script(tmp_path)
     out_dir = tmp_path / "out"
-    seed_cache(script_path, out_dir)
+    cache_dir = tmp_path / "custom-cache"
+    monkeypatch.setattr("playread.cli.load_tts_model", lambda device: FakeModel())
 
-    result = CliRunner().invoke(main, ["render", str(script_path), "--output-dir", str(out_dir), "--device", "cpu"])
+    result = CliRunner().invoke(
+        main,
+        ["render", str(script_path), "--output-dir", str(out_dir), "--cache-dir", str(cache_dir), "--device", "cpu"],
+    )
 
     assert result.exit_code == 0, result.output
-    assert (out_dir / "scenes" / "scene_1.wav").exists()
+    assert (cache_dir / "lines" / "scene_1" / "001_A.wav").exists()
+    assert (cache_dir / "manifest.json").exists()
+    assert not (out_dir / "cache").exists()
     assert (out_dir / "play.wav").exists()
-    assert (out_dir / "script.md").exists()

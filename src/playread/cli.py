@@ -5,13 +5,17 @@ from pathlib import Path
 import click
 
 from .assembly import assemble_play, assemble_scene
-from .cache import LineCache, default_output_dir, is_line_stale, load_manifest, save_manifest
+from .cache import LineCache, default_cache_dir, default_output_dir, is_line_stale, load_manifest, save_manifest
 from .script import find_line, load_script, parse_selectors, render_numbered_markdown
 from .synthesis import load_tts_model, synthesize_line
 
 
 def _output_dir(input_path: Path, output_dir: str | None) -> Path:
     return Path(output_dir).expanduser().resolve() if output_dir else default_output_dir(input_path)
+
+
+def _cache_dir(input_path: Path, cache_dir: str | None) -> Path:
+    return Path(cache_dir).expanduser().resolve() if cache_dir else default_cache_dir(input_path)
 
 
 def _validate_character_options(script_characters: set[str], *character_sets: set[str]) -> None:
@@ -29,6 +33,7 @@ def main() -> None:
 @main.command()
 @click.argument("input_yaml", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option("--output-dir", type=click.Path(file_okay=False), default=None)
+@click.option("--cache-dir", type=click.Path(file_okay=False), default=None)
 @click.option("--silence-character", multiple=True)
 @click.option("--silence-multiplier", type=float, default=1.2, show_default=True)
 @click.option("--skip-character", multiple=True)
@@ -38,6 +43,7 @@ def main() -> None:
 def render(
     input_yaml: Path,
     output_dir: str | None,
+    cache_dir: str | None,
     silence_character: tuple[str, ...],
     silence_multiplier: float,
     skip_character: tuple[str, ...],
@@ -49,7 +55,7 @@ def render(
     try:
         script = load_script(input_yaml)
         out_dir = _output_dir(input_yaml, output_dir)
-        cache = LineCache(out_dir)
+        cache = LineCache(_cache_dir(input_yaml, cache_dir))
         manifest = load_manifest(cache)
         script_characters = set(script.voices) | {line.character for line in script.lines}
         silence_characters = set(silence_character)
@@ -101,13 +107,15 @@ def render(
 @click.argument("input_yaml", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument("line", nargs=-1, required=True)
 @click.option("--output-dir", type=click.Path(file_okay=False), default=None)
+@click.option("--cache-dir", type=click.Path(file_okay=False), default=None)
 @click.option("--device", default="mps", show_default=True)
-def rerender_lines(input_yaml: Path, line: tuple[str, ...], output_dir: str | None, device: str) -> None:
+def rerender_lines(
+    input_yaml: Path, line: tuple[str, ...], output_dir: str | None, cache_dir: str | None, device: str
+) -> None:
     """Force regeneration of selected cached line WAVs."""
     try:
         script = load_script(input_yaml)
-        out_dir = _output_dir(input_yaml, output_dir)
-        cache = LineCache(out_dir)
+        cache = LineCache(_cache_dir(input_yaml, cache_dir))
         manifest = load_manifest(cache)
         selected = [find_line(script, selector) for selector in parse_selectors(line)]
         model = load_tts_model(device)

@@ -9,6 +9,7 @@ from typing import Any
 class VoiceConfig:
     character: str
     audio_prompt_path: Path | None
+    cache_prompt_path: str | None = None
     cfg_weight: float | None = None
     exaggeration: float | None = None
 
@@ -23,7 +24,7 @@ class VoiceConfig:
 
     def key_data(self) -> dict[str, Any]:
         return {
-            "audio_prompt_path": str(self.audio_prompt_path) if self.audio_prompt_path else None,
+            "audio_prompt_path": self.cache_prompt_path,
             "cfg_weight": self.cfg_weight,
             "exaggeration": self.exaggeration,
         }

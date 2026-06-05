@@ -6,7 +6,7 @@ import os
 import torchaudio as ta
 import torch
 
-from playread.cache import LineCache, is_line_stale, line_cache_key, load_manifest, save_manifest, update_line_entry
+from playread.cache import LineCache, default_cache_dir, is_line_stale, line_cache_key, load_manifest, save_manifest, update_line_entry
 from playread.script import load_script
 from playread.synthesis import synthesize_line
 
@@ -79,15 +79,39 @@ def test_cache_invalidates_voice_config_change(tmp_path: Path) -> None:
     assert is_line_stale(changed, cache, manifest)
 
 
-def test_cache_invalidates_prompt_file_metadata_change(tmp_path: Path) -> None:
+def test_cache_ignores_prompt_file_mtime_change(tmp_path: Path) -> None:
+    script_path = write_script(tmp_path)
+    cache, manifest = cache_current_line(tmp_path, script_path)
+    voice = tmp_path / "voice.wav"
+    os.utime(voice, None)
+    changed = load_script(script_path).lines[0]
+
+    assert not is_line_stale(changed, cache, manifest)
+
+
+def test_cache_invalidates_prompt_file_content_change(tmp_path: Path) -> None:
     script_path = write_script(tmp_path)
     cache, manifest = cache_current_line(tmp_path, script_path)
     voice = tmp_path / "voice.wav"
     voice.write_bytes(b"changed voice")
-    os.utime(voice, None)
     changed = load_script(script_path).lines[0]
 
     assert is_line_stale(changed, cache, manifest)
+
+
+def test_manifest_uses_relative_prompt_paths_and_hashes(tmp_path: Path) -> None:
+    script_path = write_script(tmp_path)
+    cache, manifest = cache_current_line(tmp_path, script_path)
+    line = load_script(script_path).lines[0]
+    entry = manifest["lines"][line.selector]
+
+    assert cache.cache_dir == tmp_path / "out"
+    assert default_cache_dir(script_path) == tmp_path / "script-cache"
+    assert entry["voice"]["audio_prompt_path"] == "voice.wav"
+    assert entry["prompt_files"][0]["path"] == "voice.wav"
+    assert "sha256" in entry["prompt_files"][0]
+    assert "mtime_ns" not in entry["prompt_files"][0]
+    assert str(tmp_path) not in entry["voice"]["audio_prompt_path"]
 
 
 def test_force_rerender_updates_manifest_key(tmp_path: Path) -> None:

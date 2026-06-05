@@ -8,20 +8,21 @@ import json
 
 from .model import ScriptLine
 
+MANIFEST_SCHEMA = 2
 SYNTHESIS_SETTINGS = {"engine": "chatterbox-tts", "normalizer": "examples/synthesize_all.py"}
 
 
 @dataclass(frozen=True)
 class LineCache:
-    output_dir: Path
+    cache_dir: Path
 
     @property
     def lines_dir(self) -> Path:
-        return self.output_dir / "cache" / "lines"
+        return self.cache_dir / "lines"
 
     @property
     def manifest_path(self) -> Path:
-        return self.output_dir / "cache" / "manifest.json"
+        return self.cache_dir / "manifest.json"
 
     def line_path(self, line: ScriptLine) -> Path:
         return self.lines_dir / line.scene / line.cache_filename
@@ -35,30 +36,46 @@ def default_output_dir(input_path: Path) -> Path:
     return input_path.expanduser().resolve().parent / f"{input_path.stem}-out"
 
 
+def default_cache_dir(input_path: Path) -> Path:
+    input_path = input_path.expanduser().resolve()
+    return input_path.parent / f"{input_path.stem}-cache"
+
+
 def load_manifest(cache: LineCache) -> dict[str, Any]:
     if not cache.manifest_path.exists():
-        return {"lines": {}}
+        return {"cache_schema": MANIFEST_SCHEMA, "lines": {}}
     with cache.manifest_path.open("r", encoding="utf-8") as manifest_file:
         data = json.load(manifest_file)
     if not isinstance(data, dict) or not isinstance(data.get("lines"), dict):
-        return {"lines": {}}
+        return {"cache_schema": MANIFEST_SCHEMA, "lines": {}}
+    data.setdefault("cache_schema", MANIFEST_SCHEMA)
     return data
 
 
 def save_manifest(cache: LineCache, manifest: dict[str, Any]) -> None:
     cache.ensure_dirs()
+    manifest["cache_schema"] = MANIFEST_SCHEMA
     with cache.manifest_path.open("w", encoding="utf-8") as manifest_file:
         json.dump(manifest, manifest_file, indent=2, sort_keys=True)
         manifest_file.write("\n")
 
 
-def prompt_metadata(path: Path | None) -> dict[str, Any] | None:
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def prompt_metadata(path: Path | None, cache_path: str | None) -> dict[str, Any] | None:
     if path is None:
         return None
+    metadata_path = cache_path if cache_path is not None else path.name
     if not path.exists():
-        return {"path": str(path), "exists": False}
+        return {"path": metadata_path, "exists": False}
     stat = path.stat()
-    return {"path": str(path), "exists": True, "size": stat.st_size, "mtime_ns": stat.st_mtime_ns}
+    return {"path": metadata_path, "exists": True, "size": stat.st_size, "sha256": file_sha256(path)}
 
 
 def cache_key_data(line: ScriptLine) -> dict[str, Any]:
@@ -71,7 +88,7 @@ def cache_key_data(line: ScriptLine) -> dict[str, Any]:
         "normalized_text": line.normalized_text,
         "voice": line.voice.key_data(),
         "voices": [voice.key_data() for voice in voices],
-        "prompt_files": [prompt_metadata(voice.audio_prompt_path) for voice in voices],
+        "prompt_files": [prompt_metadata(voice.audio_prompt_path, voice.cache_prompt_path) for voice in voices],
         "synthesis_settings": SYNTHESIS_SETTINGS,
     }
 
@@ -91,7 +108,7 @@ def manifest_entry(line: ScriptLine, cache_key: str) -> dict[str, Any]:
         "normalized_text": line.normalized_text,
         "voice": line.voice.key_data(),
         "voices": [voice.key_data() for voice in voices],
-        "prompt_files": [prompt_metadata(voice.audio_prompt_path) for voice in voices],
+        "prompt_files": [prompt_metadata(voice.audio_prompt_path, voice.cache_prompt_path) for voice in voices],
         "synthesis_settings": SYNTHESIS_SETTINGS,
         "cache_key": cache_key,
     }
