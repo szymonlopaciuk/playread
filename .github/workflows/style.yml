@@ -7,7 +7,7 @@ on:
 
 jobs:
   ruff:
-    name: Ruff
+    name: Style & Type Check
     runs-on: ubuntu-latest
 
     steps:
