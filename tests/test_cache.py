@@ -1,12 +1,20 @@
 from __future__ import annotations
 
-from pathlib import Path
 import os
+from pathlib import Path
 
-import torchaudio as ta
 import torch
+import torchaudio as ta
 
-from playread.cache import LineCache, default_cache_dir, is_line_stale, line_cache_key, load_manifest, save_manifest, update_line_entry
+from playread.cache import (
+    LineCache,
+    default_cache_dir,
+    is_line_stale,
+    line_cache_key,
+    load_manifest,
+    save_manifest,
+    update_line_entry,
+)
 from playread.script import load_script
 from playread.synthesis import synthesize_line
 
@@ -43,7 +51,9 @@ scene_1:
     return script_path
 
 
-def cache_current_line(tmp_path: Path, script_path: Path) -> tuple[LineCache, dict[str, object]]:
+def cache_current_line(
+    tmp_path: Path, script_path: Path
+) -> tuple[LineCache, dict[str, object]]:
     script = load_script(script_path)
     line = script.lines[0]
     cache = LineCache(tmp_path / "out")
@@ -127,7 +137,9 @@ def test_force_rerender_updates_manifest_key(tmp_path: Path) -> None:
     assert not is_line_stale(new_line, cache, manifest)
 
 
-def test_synthesize_composite_line_generates_and_mixes_component_voices(tmp_path: Path) -> None:
+def test_synthesize_composite_line_generates_and_mixes_component_voices(
+    tmp_path: Path,
+) -> None:
     voice = tmp_path / "voice.wav"
     voice.write_bytes(b"voice")
     script_path = tmp_path / "script.yaml"

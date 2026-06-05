@@ -4,7 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from playread.script import find_line, load_script, parse_selectors, render_numbered_markdown
+from playread.script import (
+    find_line,
+    load_script,
+    parse_selectors,
+    render_numbered_markdown,
+)
 
 
 def write_script(tmp_path: Path, body: str) -> Path:

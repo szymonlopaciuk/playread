@@ -45,16 +45,22 @@ def _match_channels(wav: torch.Tensor, channels: int) -> torch.Tensor:
     return wav[:channels, :]
 
 
-def _route_for_focus(wav: torch.Tensor, line: ScriptLine, focus_character: str, focus_channel: str) -> torch.Tensor:
+def _route_for_focus(
+    wav: torch.Tensor, line: ScriptLine, focus_character: str, focus_channel: str
+) -> torch.Tensor:
     mono = _match_channels(wav, 1)
     routed = torch.zeros(2, mono.shape[1])
     focus_index = 0 if focus_channel == "left" else 1
     other_index = 1 - focus_index
-    routed[focus_index if line.character == focus_character else other_index, :] = mono[0]
+    routed[focus_index if line.character == focus_character else other_index, :] = mono[
+        0
+    ]
     return routed
 
 
-def _silenced_line(line: ScriptLine, cache: LineCache, sr: int, multiplier: float, channels: int) -> torch.Tensor:
+def _silenced_line(
+    line: ScriptLine, cache: LineCache, sr: int, multiplier: float, channels: int
+) -> torch.Tensor:
     line_path = cache.line_path(line)
     if line_path.exists():
         wav, cached_sr = read_wav(line_path)
@@ -108,7 +114,15 @@ def assemble_scene(
         if line.character in skip_characters:
             continue
         segments.append(
-            _line_audio(line, cache, sr, silence_characters, silence_multiplier, focus_character, focus_channel)
+            _line_audio(
+                line,
+                cache,
+                sr,
+                silence_characters,
+                silence_multiplier,
+                focus_character,
+                focus_channel,
+            )
         )
         segments.append(silence(sr, line_pause_ms(line.character), channels))
 

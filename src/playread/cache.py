@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-import hashlib
-import json
 
 from .model import ScriptLine
 
 MANIFEST_SCHEMA = 2
-SYNTHESIS_SETTINGS = {"engine": "chatterbox-tts", "normalizer": "examples/synthesize_all.py"}
+SYNTHESIS_SETTINGS = {
+    "engine": "chatterbox-tts",
+    "normalizer": "examples/synthesize_all.py",
+}
 
 
 @dataclass(frozen=True)
@@ -75,7 +78,12 @@ def prompt_metadata(path: Path | None, cache_path: str | None) -> dict[str, Any]
     if not path.exists():
         return {"path": metadata_path, "exists": False}
     stat = path.stat()
-    return {"path": metadata_path, "exists": True, "size": stat.st_size, "sha256": file_sha256(path)}
+    return {
+        "path": metadata_path,
+        "exists": True,
+        "size": stat.st_size,
+        "sha256": file_sha256(path),
+    }
 
 
 def cache_key_data(line: ScriptLine) -> dict[str, Any]:
@@ -88,13 +96,18 @@ def cache_key_data(line: ScriptLine) -> dict[str, Any]:
         "normalized_text": line.normalized_text,
         "voice": line.voice.key_data(),
         "voices": [voice.key_data() for voice in voices],
-        "prompt_files": [prompt_metadata(voice.audio_prompt_path, voice.cache_prompt_path) for voice in voices],
+        "prompt_files": [
+            prompt_metadata(voice.audio_prompt_path, voice.cache_prompt_path)
+            for voice in voices
+        ],
         "synthesis_settings": SYNTHESIS_SETTINGS,
     }
 
 
 def line_cache_key(line: ScriptLine) -> str:
-    encoded = json.dumps(cache_key_data(line), sort_keys=True, separators=(",", ":")).encode("utf-8")
+    encoded = json.dumps(
+        cache_key_data(line), sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
 
@@ -108,7 +121,10 @@ def manifest_entry(line: ScriptLine, cache_key: str) -> dict[str, Any]:
         "normalized_text": line.normalized_text,
         "voice": line.voice.key_data(),
         "voices": [voice.key_data() for voice in voices],
-        "prompt_files": [prompt_metadata(voice.audio_prompt_path, voice.cache_prompt_path) for voice in voices],
+        "prompt_files": [
+            prompt_metadata(voice.audio_prompt_path, voice.cache_prompt_path)
+            for voice in voices
+        ],
         "synthesis_settings": SYNTHESIS_SETTINGS,
         "cache_key": cache_key,
     }
@@ -124,4 +140,6 @@ def is_line_stale(line: ScriptLine, cache: LineCache, manifest: dict[str, Any]) 
 
 
 def update_line_entry(line: ScriptLine, manifest: dict[str, Any]) -> None:
-    manifest.setdefault("lines", {})[line.selector] = manifest_entry(line, line_cache_key(line))
+    manifest.setdefault("lines", {})[line.selector] = manifest_entry(
+        line, line_cache_key(line)
+    )

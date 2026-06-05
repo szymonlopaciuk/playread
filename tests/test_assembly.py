@@ -37,7 +37,9 @@ scene_1:
 def write_line_wavs(script_path: Path, out_dir: Path) -> tuple[object, LineCache]:
     script = load_script(script_path)
     cache = LineCache(out_dir)
-    for line, samples, value in zip(script.lines, [100, 200], [0.25, 0.75], strict=True):
+    for line, samples, value in zip(
+        script.lines, [100, 200], [0.25, 0.75], strict=True
+    ):
         path = cache.line_path(line)
         path.parent.mkdir(parents=True, exist_ok=True)
         ta.save(str(path), torch.full((1, samples), value), SR)
@@ -57,9 +59,23 @@ def test_assemble_default_mono(tmp_path: Path) -> None:
 def test_assemble_stereo_focus_left_and_right(tmp_path: Path) -> None:
     script, cache = write_line_wavs(write_script(tmp_path), tmp_path / "out")
 
-    left_path = assemble_scene(script, "scene_1", cache, tmp_path / "left", SR, focus_character="A", focus_channel="left")
+    left_path = assemble_scene(
+        script,
+        "scene_1",
+        cache,
+        tmp_path / "left",
+        SR,
+        focus_character="A",
+        focus_channel="left",
+    )
     right_path = assemble_scene(
-        script, "scene_1", cache, tmp_path / "right", SR, focus_character="A", focus_channel="right"
+        script,
+        "scene_1",
+        cache,
+        tmp_path / "right",
+        SR,
+        focus_character="A",
+        focus_channel="right",
     )
     left, _ = ta.load(str(left_path))
     right, _ = ta.load(str(right_path))
@@ -76,7 +92,13 @@ def test_assemble_silenced_character_uses_cached_duration(tmp_path: Path) -> Non
     script, cache = write_line_wavs(write_script(tmp_path), tmp_path / "out")
 
     out = assemble_scene(
-        script, "scene_1", cache, tmp_path / "out", SR, silence_characters={"A"}, silence_multiplier=2.0
+        script,
+        "scene_1",
+        cache,
+        tmp_path / "out",
+        SR,
+        silence_characters={"A"},
+        silence_multiplier=2.0,
     )
     wav, _ = ta.load(str(out))
 
@@ -84,12 +106,20 @@ def test_assemble_silenced_character_uses_cached_duration(tmp_path: Path) -> Non
     assert torch.all(wav[:, 300:500] == 0)
 
 
-def test_assemble_silenced_character_estimates_duration_without_cache(tmp_path: Path) -> None:
+def test_assemble_silenced_character_estimates_duration_without_cache(
+    tmp_path: Path,
+) -> None:
     script, cache = write_line_wavs(write_script(tmp_path), tmp_path / "out")
     cache.line_path(script.lines[0]).unlink()
 
     out = assemble_scene(
-        script, "scene_1", cache, tmp_path / "out", SR, silence_characters={"A"}, silence_multiplier=2.0
+        script,
+        "scene_1",
+        cache,
+        tmp_path / "out",
+        SR,
+        silence_characters={"A"},
+        silence_multiplier=2.0,
     )
     wav, _ = ta.load(str(out))
 
@@ -100,7 +130,9 @@ def test_assemble_silenced_character_estimates_duration_without_cache(tmp_path: 
 def test_assemble_skipped_character_removes_line_and_pause(tmp_path: Path) -> None:
     script, cache = write_line_wavs(write_script(tmp_path), tmp_path / "out")
 
-    out = assemble_scene(script, "scene_1", cache, tmp_path / "out", SR, skip_characters={"A"})
+    out = assemble_scene(
+        script, "scene_1", cache, tmp_path / "out", SR, skip_characters={"A"}
+    )
     wav, _ = ta.load(str(out))
 
     assert wav.shape == (1, 300 + 200 + 280)

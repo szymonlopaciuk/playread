@@ -52,7 +52,9 @@ class ScriptLine:
 
     @property
     def cache_filename(self) -> str:
-        safe_character = "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in self.character)
+        safe_character = "".join(
+            ch if ch.isalnum() or ch in "._-" else "_" for ch in self.character
+        )
         return f"{self.number:03d}_{safe_character}.wav"
 
 
@@ -74,7 +76,7 @@ class LineSelector:
     number: int
 
     @classmethod
-    def parse(cls, value: str) -> "LineSelector":
+    def parse(cls, value: str) -> LineSelector:
         scene, sep, number_text = value.rpartition(":")
         if not sep or not scene or not number_text.isdecimal():
             raise ValueError(f"line selector must use SCENE:NUMBER format: {value}")

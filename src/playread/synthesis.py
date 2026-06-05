@@ -9,15 +9,13 @@ import torchaudio as ta
 from .cache import LineCache, update_line_entry
 from .model import ScriptLine, VoiceConfig
 
-
 COMPOSITE_VOICE_OFFSET_MS = 25
 
 
 class TTSModel(Protocol):
     sr: int
 
-    def generate(self, **kwargs: object) -> torch.Tensor:
-        ...
+    def generate(self, **kwargs: object) -> torch.Tensor: ...
 
 
 def load_tts_model(device: str) -> TTSModel:
@@ -59,7 +57,9 @@ def _mix_waveforms(wavs: list[torch.Tensor]) -> torch.Tensor:
         if wav.shape[0] == 1 and channels > 1:
             wav = wav.expand(channels, -1)
         elif wav.shape[0] != channels:
-            raise ValueError("generated composite voices must have compatible channel counts")
+            raise ValueError(
+                "generated composite voices must have compatible channel counts"
+            )
         if wav.shape[1] < max_len:
             wav = torch.nn.functional.pad(wav, (0, max_len - wav.shape[1]))
         mixed = mixed + wav
@@ -75,7 +75,9 @@ def _generate_voice(model: TTSModel, text: str, voice: VoiceConfig) -> torch.Ten
     return _as_cpu_channels_first(model.generate(**kwargs))
 
 
-def synthesize_line(model: TTSModel, line: ScriptLine, cache: LineCache, manifest: dict[str, object]) -> Path:
+def synthesize_line(
+    model: TTSModel, line: ScriptLine, cache: LineCache, manifest: dict[str, object]
+) -> Path:
     cache.ensure_dirs()
     out_path = cache.line_path(line)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -85,7 +87,11 @@ def synthesize_line(model: TTSModel, line: ScriptLine, cache: LineCache, manifes
         wav = _generate_voice(model, line.normalized_text, line_voices[0])
     else:
         wavs = [
-            _delay_waveform(_generate_voice(model, line.normalized_text, voice), model.sr, index * COMPOSITE_VOICE_OFFSET_MS)
+            _delay_waveform(
+                _generate_voice(model, line.normalized_text, voice),
+                model.sr,
+                index * COMPOSITE_VOICE_OFFSET_MS,
+            )
             for index, voice in enumerate(line_voices)
         ]
         wav = _mix_waveforms(wavs)

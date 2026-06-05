@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
 import os
 import re
+from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -65,18 +65,24 @@ def load_script(script_path: Path) -> Script:
     script_dir = script_path.parent
     voices_data = _require_mapping(script_data.get("voices"), "voices")
     play_data = script_data.get("play")
-    if not isinstance(play_data, list) or not all(isinstance(name, str) for name in play_data):
+    if not isinstance(play_data, list) or not all(
+        isinstance(name, str) for name in play_data
+    ):
         raise ValueError("play must be a list of scene names")
 
     voices: dict[str, VoiceConfig] = {}
     for character, raw_cfg in voices_data.items():
         cfg = _require_mapping(raw_cfg, f"voices.{character}")
-        prompt_path = _resolve_path(cfg["file"], script_dir) if cfg.get("file") else None
+        prompt_path = (
+            _resolve_path(cfg["file"], script_dir) if cfg.get("file") else None
+        )
         character_name = str(character)
         voices[character_name] = VoiceConfig(
             character=character_name,
             audio_prompt_path=prompt_path,
-            cache_prompt_path=_cache_path(prompt_path, script_dir) if prompt_path else None,
+            cache_prompt_path=_cache_path(prompt_path, script_dir)
+            if prompt_path
+            else None,
             cfg_weight=cfg.get("cfg_weight"),
             exaggeration=cfg.get("exaggeration"),
         )
@@ -90,7 +96,11 @@ def load_script(script_path: Path) -> Script:
         lines: list[ScriptLine] = []
         for line_index, raw_line in enumerate(raw_lines, start=1):
             if not isinstance(raw_line, dict) or len(raw_line) != 1:
-                raise ValueError(f"{scene_name}[{line_index}] must contain one character-to-line mapping")
+                message = (
+                    f"{scene_name}[{line_index}] must contain one "
+                    "character-to-line mapping"
+                )
+                raise ValueError(message)
             character, text = next(iter(raw_line.items()))
             character_name = str(character)
             if not isinstance(text, str):
@@ -100,14 +110,22 @@ def load_script(script_path: Path) -> Script:
             else:
                 component_names = composite_characters(character_name)
                 if not component_names:
-                    raise ValueError(f"{scene_name}[{line_index}] has no voice configured for {character_name}")
-                missing_components = [name for name in component_names if name not in voices]
+                    message = (
+                        f"{scene_name}[{line_index}] has no voice configured for "
+                        f"{character_name}"
+                    )
+                    raise ValueError(message)
+                missing_components = [
+                    name for name in component_names if name not in voices
+                ]
                 if missing_components:
                     missing_text = ", ".join(missing_components)
-                    raise ValueError(
-                        f"{scene_name}[{line_index}] has no voice configured for composite speaker component(s): "
+                    message = (
+                        f"{scene_name}[{line_index}] has no voice configured for "
+                        "composite speaker component(s): "
                         f"{missing_text}"
                     )
+                    raise ValueError(message)
                 line_voices = tuple(voices[name] for name in component_names)
             lines.append(
                 ScriptLine(
@@ -135,7 +153,9 @@ def find_line(script: Script, selector: LineSelector) -> ScriptLine:
     if lines is None:
         raise ValueError(f"unknown scene in selector: {selector.scene}")
     if selector.number > len(lines):
-        raise ValueError(f"line selector out of range: {selector.scene}:{selector.number}")
+        raise ValueError(
+            f"line selector out of range: {selector.scene}:{selector.number}"
+        )
     return lines[selector.number - 1]
 
 

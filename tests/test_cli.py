@@ -7,7 +7,13 @@ import torch
 import torchaudio as ta
 from click.testing import CliRunner
 
-from playread.cache import LineCache, default_cache_dir, load_manifest, save_manifest, update_line_entry
+from playread.cache import (
+    LineCache,
+    default_cache_dir,
+    load_manifest,
+    save_manifest,
+    update_line_entry,
+)
 from playread.cli import main
 from playread.script import load_script
 
@@ -58,13 +64,17 @@ def test_cli_script_writes_markdown(tmp_path: Path) -> None:
     script_path = write_script(tmp_path)
     out_dir = tmp_path / "out"
 
-    result = CliRunner().invoke(main, ["script", str(script_path), "--output-dir", str(out_dir)])
+    result = CliRunner().invoke(
+        main, ["script", str(script_path), "--output-dir", str(out_dir)]
+    )
 
     assert result.exit_code == 0, result.output
     assert "`scene_1:3` **A**" in (out_dir / "script.md").read_text(encoding="utf-8")
 
 
-def test_cli_rerender_lines_forces_selected_lines(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cli_rerender_lines_forces_selected_lines(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     script_path = write_script(tmp_path)
     cache_dir = tmp_path / "custom-cache"
     monkeypatch.setattr("playread.cli.load_tts_model", lambda device: FakeModel())
@@ -96,8 +106,14 @@ def test_cli_render_assembles_from_default_shared_cache(tmp_path: Path) -> None:
     out_b = tmp_path / "out-b"
     seed_cache(script_path, cache_dir)
 
-    result_a = CliRunner().invoke(main, ["render", str(script_path), "--output-dir", str(out_a), "--device", "cpu"])
-    result_b = CliRunner().invoke(main, ["render", str(script_path), "--output-dir", str(out_b), "--device", "cpu"])
+    result_a = CliRunner().invoke(
+        main,
+        ["render", str(script_path), "--output-dir", str(out_a), "--device", "cpu"],
+    )
+    result_b = CliRunner().invoke(
+        main,
+        ["render", str(script_path), "--output-dir", str(out_b), "--device", "cpu"],
+    )
 
     assert result_a.exit_code == 0, result_a.output
     assert result_b.exit_code == 0, result_b.output
@@ -111,7 +127,9 @@ def test_cli_render_assembles_from_default_shared_cache(tmp_path: Path) -> None:
     assert (out_b / "script.md").exists()
 
 
-def test_cli_render_uses_custom_cache_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cli_render_uses_custom_cache_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     script_path = write_script(tmp_path)
     out_dir = tmp_path / "out"
     cache_dir = tmp_path / "custom-cache"
@@ -119,7 +137,16 @@ def test_cli_render_uses_custom_cache_dir(tmp_path: Path, monkeypatch: pytest.Mo
 
     result = CliRunner().invoke(
         main,
-        ["render", str(script_path), "--output-dir", str(out_dir), "--cache-dir", str(cache_dir), "--device", "cpu"],
+        [
+            "render",
+            str(script_path),
+            "--output-dir",
+            str(out_dir),
+            "--cache-dir",
+            str(cache_dir),
+            "--device",
+            "cpu",
+        ],
     )
 
     assert result.exit_code == 0, result.output

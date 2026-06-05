@@ -1,0 +1,27 @@
+name: Style
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  ruff:
+    name: Ruff
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Check formatting
+        run: uv run --only-dev ruff format --check src tests
+
+      - name: Check linting
+        run: uv run --only-dev ruff check src tests

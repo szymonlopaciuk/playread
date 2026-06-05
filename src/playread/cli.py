@@ -5,24 +5,43 @@ from pathlib import Path
 import click
 
 from .assembly import assemble_play, assemble_scene
-from .cache import LineCache, default_cache_dir, default_output_dir, is_line_stale, load_manifest, save_manifest
+from .cache import (
+    LineCache,
+    default_cache_dir,
+    default_output_dir,
+    is_line_stale,
+    load_manifest,
+    save_manifest,
+)
 from .script import find_line, load_script, parse_selectors, render_numbered_markdown
 from .synthesis import load_tts_model, synthesize_line
 
 
 def _output_dir(input_path: Path, output_dir: str | None) -> Path:
-    return Path(output_dir).expanduser().resolve() if output_dir else default_output_dir(input_path)
+    return (
+        Path(output_dir).expanduser().resolve()
+        if output_dir
+        else default_output_dir(input_path)
+    )
 
 
 def _cache_dir(input_path: Path, cache_dir: str | None) -> Path:
-    return Path(cache_dir).expanduser().resolve() if cache_dir else default_cache_dir(input_path)
+    return (
+        Path(cache_dir).expanduser().resolve()
+        if cache_dir
+        else default_cache_dir(input_path)
+    )
 
 
-def _validate_character_options(script_characters: set[str], *character_sets: set[str]) -> None:
+def _validate_character_options(
+    script_characters: set[str], *character_sets: set[str]
+) -> None:
     for characters in character_sets:
         unknown = sorted(characters - script_characters)
         if unknown:
-            raise click.ClickException(f"unknown character option: {', '.join(unknown)}")
+            raise click.ClickException(
+                f"unknown character option: {', '.join(unknown)}"
+            )
 
 
 @click.group()
@@ -31,14 +50,21 @@ def main() -> None:
 
 
 @main.command()
-@click.argument("input_yaml", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument(
+    "input_yaml", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
 @click.option("--output-dir", type=click.Path(file_okay=False), default=None)
 @click.option("--cache-dir", type=click.Path(file_okay=False), default=None)
 @click.option("--silence-character", multiple=True)
 @click.option("--silence-multiplier", type=float, default=1.2, show_default=True)
 @click.option("--skip-character", multiple=True)
 @click.option("--focus-character", default=None)
-@click.option("--focus-channel", type=click.Choice(["left", "right"]), default="left", show_default=True)
+@click.option(
+    "--focus-channel",
+    type=click.Choice(["left", "right"]),
+    default="left",
+    show_default=True,
+)
 @click.option("--device", default="mps", show_default=True)
 def render(
     input_yaml: Path,
@@ -57,18 +83,28 @@ def render(
         out_dir = _output_dir(input_yaml, output_dir)
         cache = LineCache(_cache_dir(input_yaml, cache_dir))
         manifest = load_manifest(cache)
-        script_characters = set(script.voices) | {line.character for line in script.lines}
+        script_characters = set(script.voices) | {
+            line.character for line in script.lines
+        }
         silence_characters = set(silence_character)
         skip_characters = set(skip_character)
         focus_characters = {focus_character} if focus_character else set()
-        _validate_character_options(script_characters, silence_characters, skip_characters, focus_characters)
+        _validate_character_options(
+            script_characters, silence_characters, skip_characters, focus_characters
+        )
 
-        stale_lines = [line for line in script.lines if is_line_stale(line, cache, manifest)]
+        stale_lines = [
+            line for line in script.lines if is_line_stale(line, cache, manifest)
+        ]
         if stale_lines:
-            click.echo(f"Rendering {len(stale_lines)} stale or missing line(s) on {device}.")
+            click.echo(
+                f"Rendering {len(stale_lines)} stale or missing line(s) on {device}."
+            )
             model = load_tts_model(device)
             for line in stale_lines:
-                click.echo(f"[{line.selector}] {line.character}: {line.normalized_text}")
+                click.echo(
+                    f"[{line.selector}] {line.character}: {line.normalized_text}"
+                )
                 synthesize_line(model, line, cache, manifest)
             save_manifest(cache, manifest)
             sr = model.sr
@@ -104,13 +140,19 @@ def render(
 
 
 @main.command("rerender-lines")
-@click.argument("input_yaml", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument(
+    "input_yaml", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
 @click.argument("line", nargs=-1, required=True)
 @click.option("--output-dir", type=click.Path(file_okay=False), default=None)
 @click.option("--cache-dir", type=click.Path(file_okay=False), default=None)
 @click.option("--device", default="mps", show_default=True)
 def rerender_lines(
-    input_yaml: Path, line: tuple[str, ...], output_dir: str | None, cache_dir: str | None, device: str
+    input_yaml: Path,
+    line: tuple[str, ...],
+    output_dir: str | None,
+    cache_dir: str | None,
+    device: str,
 ) -> None:
     """Force regeneration of selected cached line WAVs."""
     try:
@@ -120,7 +162,8 @@ def rerender_lines(
         selected = [find_line(script, selector) for selector in parse_selectors(line)]
         model = load_tts_model(device)
         for selected_line in selected:
-            click.echo(f"[{selected_line.selector}] {selected_line.character}: {selected_line.normalized_text}")
+            prefix = f"[{selected_line.selector}] {selected_line.character}:"
+            click.echo(f"{prefix} {selected_line.normalized_text}")
             synthesize_line(model, selected_line, cache, manifest)
         save_manifest(cache, manifest)
         click.echo(f"Rerendered {len(selected)} line(s).")
@@ -129,7 +172,9 @@ def rerender_lines(
 
 
 @main.command("script")
-@click.argument("input_yaml", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument(
+    "input_yaml", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
 @click.option("--output-dir", type=click.Path(file_okay=False), default=None)
 def script_command(input_yaml: Path, output_dir: str | None) -> None:
     """Write a numbered Markdown reference for line selectors."""
